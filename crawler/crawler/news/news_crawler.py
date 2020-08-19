@@ -94,8 +94,9 @@ class NewsCrawler(object):
         soup = BeautifulSoup(html, 'lxml')
         return soup.title.string
 
-    def _get_meta_data(self, html: str, names: List[str] = ['keywords', 'apub:time', 'author'],
-                       properties: List[str] = ['og:type', 'article:published_time', 'article:author']):
+    def _get_meta_data(self, html: str, names: List[str] = ['keywords', 'apub:time', 'author', 'description', 'mediaid'],
+                       properties: List[str] = ['og:type', 'og:release_date', 'og:description', 'article:published_time', 'article:author'],
+                       itemprops: List[str] = ['datePublished', 'dateUpdate']):
         """
         https://stackoverflow.com/questions/36768068/get-meta-tag-content-property-with-beautifulsoup-and-python
         """
@@ -107,6 +108,9 @@ class NewsCrawler(object):
                          ] = tag['content']
             elif tag.get('property') in properties:
                 metadata['meta-{}'.format(tag.get('property'))
+                         ] = tag['content']
+            elif tag.get('itemprop') in itemprops:
+                metadata['meta-{}'.format(tag.get('itemprop'))
                          ] = tag['content']
 
         return metadata
