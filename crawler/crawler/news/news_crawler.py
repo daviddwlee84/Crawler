@@ -5,10 +5,25 @@ import json
 from bs4 import BeautifulSoup
 import requests
 from tqdm import tqdm
+from datetime import date, datetime
+
+
+def json_serial(obj):
+    """
+    JSON serializer for objects not serializable by default json code
+
+    https://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable
+
+    TODO: move this to utils
+    """
+
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
 
 
 class NewsCrawler(object):
-    def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../result/news.json'):
+    def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/news.json'):
         """
 
         TODO: anti-crawler mechanism e.g. delay
@@ -54,6 +69,9 @@ class NewsCrawler(object):
     def _get_html_body(self, raw_html: str) -> str:
         """
         get html body and do some clean up
+
+        (maybe this step is not necessary, but will reduce
+        the size of data to exclude some unnecessary code)
         """
         tree = BeautifulSoup(raw_html, 'lxml')
 
@@ -67,7 +85,11 @@ class NewsCrawler(object):
         for tag in body.select('style'):
             tag.decompose()
 
-        return body
+        return str(body)
+
+    def _get_html_title(self, html: str):
+        soup = BeautifulSoup(html, 'lxml')
+        return soup.title.string
 
     def _get_title(self, html_body: str):
         raise NotImplementedError()
@@ -82,18 +104,19 @@ class NewsCrawler(object):
         raise NotImplementedError()
 
     def _crawl_html_body(self, html_body: str) -> Dict[str, str]:
+        """
+        Crawl HTML Body and extract the information we interest in the webpage.
+        Note that, you need to customize each function for the website.
+        """
         title = self._get_title(html_body)
         author = self._get_author(html_body)
         date = self._get_date(html_body)
         content = self._get_content(html_body)
 
-        # https://stackoverflow.com/questions/9626535/get-protocol-host-name-from-url
-        _parsed_uri = urlparse(url)
-        domain = '{uri.netloc}'.format(uri=_parsed_uri)
-
         return {
-            'url': url,
-            'domain': domain,
+            'url': None,
+            'domain': None,
+            'html_title': None,
             'html_body': html_body,
             'title': title,
             'author': author,
@@ -101,13 +124,31 @@ class NewsCrawler(object):
             'content': content,
         }
 
-    def crawl_html_body(self, html_body: str) -> Dict[str, str]:
+    def crawl_html(self, html: str, input_body_only: bool = False, url: str = None) -> Dict[str, str]:
         """
         Wrapper for _craw_html_body
 
         We store result to memory and file here, if specified.
+
+        The input_body_only is used to support that the crawled result of
+        RetroIndex only store HTML body
         """
+        if input_body_only:
+            html_body = html
+        else:
+            html_body = self._get_html_body(html)
+
         result = self._crawl_html_body(html_body)
+        if not input_body_only:
+            html_title = self._get_html_title(html)
+            result['html_title'] = html_title
+
+        if url:
+            # https://stackoverflow.com/questions/9626535/get-protocol-host-name-from-url
+            _parsed_uri = urlparse(url)
+            domain = '{uri.netloc}'.format(uri=_parsed_uri)
+            result['url'] = url
+            result['domain'] = domain
 
         if self._store_in_memory:
             # https://stackoverflow.com/questions/51774826/append-dictionary-to-data-frame
@@ -115,7 +156,7 @@ class NewsCrawler(object):
 
         if self._store_in_file:
             with open(self._store_in_file, 'a', encoding='utf8') as fp:
-                json.dump(result, fp, ensure_ascii=False)
+                json.dump(result, fp, ensure_ascii=False, default=json_serial)
                 fp.write('\n')
 
         return result
@@ -128,8 +169,7 @@ class NewsCrawler(object):
         if not raw_html:
             return None
 
-        html_body = self._get_html_body(raw_html)
-        result = self.crawl_html_body(html_body)
+        result = self.crawl_html(raw_html, input_body_only=False, url=url)
 
         return result
 
