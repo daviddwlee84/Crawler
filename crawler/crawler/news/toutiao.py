@@ -6,7 +6,7 @@ import datefinder
 class TouTiaoNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/toutiao_news.json'):
         # https://stackoverflow.com/questions/576169/understanding-python-super-with-init-methods
-        super().__init__(store_in_file, store_in_file)
+        super().__init__(store_in_memory, store_in_file)
 
     def _get_raw_html(self, url: str) -> str:
         """
