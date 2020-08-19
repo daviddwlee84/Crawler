@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+import warnings
 from typing import Dict, List
 import pandas as pd
 import json
@@ -87,9 +88,44 @@ class NewsCrawler(object):
 
         return str(body)
 
+    # ===== HTML Head ===== #
+
     def _get_html_title(self, html: str):
         soup = BeautifulSoup(html, 'lxml')
         return soup.title.string
+
+    def _get_meta_data(self, html: str, names: List[str] = ['keywords', 'apub:time', 'author'],
+                       properties: List[str] = ['og:type', 'article:published_time', 'article:author']):
+        """
+        https://stackoverflow.com/questions/36768068/get-meta-tag-content-property-with-beautifulsoup-and-python
+        """
+        soup = BeautifulSoup(html, 'lxml')
+        metadata = {}
+        for tag in soup.find_all('meta'):
+            if tag.get('name') in names:
+                metadata['meta-{}'.format(tag.get('name'))
+                         ] = tag['content']
+            elif tag.get('property') in properties:
+                metadata['meta-{}'.format(tag.get('property'))
+                         ] = tag['content']
+
+        return metadata
+
+    def _update_info_in_head(self, dict_to_update: Dict[str, str], html: str) -> None:
+        """
+        Mainly for HTML Title and meta data, sometimes need to customize for each website.
+
+        * html_title
+        * keywords
+
+        (authors, description, ...)
+        """
+        html_title = self._get_html_title(html)
+        dict_to_update['html_title'] = html_title
+        metadata = self._get_meta_data(html)
+        dict_to_update['meta'] = metadata
+
+    # ===== HTML Body ===== #
 
     def _get_title(self, html_body: str):
         raise NotImplementedError()
@@ -117,12 +153,15 @@ class NewsCrawler(object):
             'url': None,
             'domain': None,
             'html_title': None,
+            'meta': None,
             'html_body': html_body,
             'title': title,
             'author': author,
             'date': date,
             'content': content,
         }
+
+    # ===== Public Methods ===== #
 
     def crawl_html(self, html: str, input_body_only: bool = False, url: str = None) -> Dict[str, str]:
         """
@@ -140,8 +179,7 @@ class NewsCrawler(object):
 
         result = self._crawl_html_body(html_body)
         if not input_body_only:
-            html_title = self._get_html_title(html)
-            result['html_title'] = html_title
+            self._update_info_in_head(result, html)
 
         if url:
             # https://stackoverflow.com/questions/9626535/get-protocol-host-name-from-url
@@ -178,7 +216,7 @@ class NewsCrawler(object):
         for url in tqdm(urls):
             result = self.crawl_single_url(url)
             if not result:
-                print('Fail:', url)
+                warnings.warn(f'Fail: {url}')
                 continue
             results.append(result)
         return results

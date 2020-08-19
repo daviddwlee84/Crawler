@@ -4,7 +4,7 @@ import datefinder
 
 
 class NetEaseNewsCrawler(NewsCrawler):
-    def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/tencent_news.json'):
+    def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/neteast_news.json'):
         super().__init__(store_in_file, store_in_file)
 
     def _get_title(self, html_body: str):
@@ -16,7 +16,7 @@ class NetEaseNewsCrawler(NewsCrawler):
         TODO: Still need to refine this
 
         Information can be found in <head> <meta name="author">
-        Information can be found in <head> <meta name="article:author">
+        Information can be found in <head> <meta property="article:author">
         """
         soup = BeautifulSoup(html_body, 'lxml')
         return soup.select_one('.ep-editor').text
