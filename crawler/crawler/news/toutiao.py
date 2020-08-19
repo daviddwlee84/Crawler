@@ -8,7 +8,7 @@ class TouTiaoNewsCrawler(NewsCrawler):
         # https://stackoverflow.com/questions/576169/understanding-python-super-with-init-methods
         super().__init__(store_in_memory, store_in_file)
 
-    def _get_raw_html(self, url: str) -> str:
+    def _get_raw_html(self, url: str, force_encode: bool = True, specific_encoding: str = '') -> str:
         """
         Deal with some anti-crawler mechanism
         """

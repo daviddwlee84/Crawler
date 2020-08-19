@@ -29,9 +29,7 @@ class NewsCrawler(object):
 
         TODO: anti-crawler mechanism e.g. delay
 
-
         TODO: customize parser
-
         https://rushter.com/blog/python-fast-html-parser/
 
         * selectolax
@@ -42,7 +40,7 @@ class NewsCrawler(object):
         if self._store_in_memory:
             self.data = pd.DataFrame()
 
-    def _get_raw_html(self, url: str) -> str:
+    def _get_raw_html(self, url: str, force_encode: bool = True, specific_encoding: str = '') -> str:
         """
         Note that, you might need to customize this function,
         because the anti-crawler mechanism of each website are different.
@@ -54,6 +52,12 @@ class NewsCrawler(object):
         * https://pypi.org/project/fake-useragent/
         * https://github.com/hellysmile/fake-useragent
 
+        charset/encoding might have problem
+        * https://www.w3.org/International/questions/qa-changing-encoding
+        * https://blog.csdn.net/guoxinian/article/details/83047746
+        * https://www.jianshu.com/p/f819ab06a53a
+        * https://blog.csdn.net/hxldxx99/article/details/48932393
+
         TODO: retry on failure
         https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/
         """
@@ -63,7 +67,17 @@ class NewsCrawler(object):
         raw_html = requests.get(url, headers=headers)
 
         if raw_html.status_code == 200:
-            return raw_html.text
+            if force_encode or specific_encoding:
+                if specific_encoding:
+                    encoding = specific_encoding
+                else:
+                    if raw_html.encoding != 'utf-8':
+                        # automatic specific encoding
+                        encoding = raw_html.encoding
+                    else:
+                        encoding = None
+
+            return raw_html.text.encode(encoding, errors='ignore') if encoding else raw_html.text
         else:
             return None
 
@@ -94,7 +108,7 @@ class NewsCrawler(object):
         soup = BeautifulSoup(html, 'lxml')
         return soup.title.string
 
-    def _get_meta_data(self, html: str, names: List[str] = ['keywords', 'apub:time', 'author', 'description', 'mediaid'],
+    def _get_meta_data(self, html: str, names: List[str] = ['keywords', 'author', 'source', 'description', 'mediaid', 'apub:time'],
                        properties: List[str] = ['og:type', 'og:release_date', 'og:description', 'article:published_time', 'article:author'],
                        itemprops: List[str] = ['datePublished', 'dateUpdate']):
         """
