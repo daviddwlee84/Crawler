@@ -6,6 +6,7 @@
 
 ## Todo
 
+* [ ] Passing soup object instead of HTML body string
 * [ ] Anti-crawler
 * [ ] Testcase
 * [ ] Get keyword (during crawling (e.g. NER, html meta data) or after (e.g. TF-IDF))
