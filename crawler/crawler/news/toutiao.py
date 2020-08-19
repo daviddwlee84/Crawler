@@ -48,7 +48,7 @@ class TouTiaoNewsCrawler(NewsCrawler):
 if __name__ == "__main__":
     crawler = TouTiaoNewsCrawler()
     # TODO: deal with anti-crawler stuff
-    # print(crawler.crawl_single('https://www.toutiao.com/a6862484901053071875/'))
+    # print(crawler.crawl_single_url('https://www.toutiao.com/a6862484901053071875/'))
 
     # TODO: write Testcase by evaluate parse result with test_html_body/toutiao.json
     with open('test_html_body/toutiao.html', 'r') as fp:

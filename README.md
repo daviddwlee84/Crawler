@@ -4,6 +4,12 @@
 
 ### News Crawler
 
+## Todo
+
+* [ ] Anti-crawler
+* [ ] Testcase
+* [ ] Get keyword (during crawling (e.g. NER, html meta data) or after (e.g. TF-IDF))
+
 ## Resources
 
 * [Crawler Traps: How to Identify and Avoid Them](https://www.contentkingapp.com/academy/crawler-traps/)

@@ -19,6 +19,10 @@ Special
 
 * [中国汽车新闻网](http://www.chinaautonews.com.cn/)
 
+## Note
+
+> parser notes was taken and reference links were added in code, mostly in the base class `news_crawler.py` and the first crawler `toutiao.py`
+
 ## Resources
 
 ### Example
