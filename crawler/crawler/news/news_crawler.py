@@ -145,16 +145,16 @@ class NewsCrawler(object):
 
     # ===== HTML Body ===== #
 
-    def _get_title(self, html_body: str):
+    def _get_title(self, html_body_soup: BeautifulSoup):
         raise NotImplementedError()
 
-    def _get_author(self, html_body: str):
+    def _get_author(self, html_body_soup: BeautifulSoup):
         raise NotImplementedError()
 
-    def _get_date(self, html_body: str):
+    def _get_date(self, html_body_soup: BeautifulSoup):
         raise NotImplementedError()
 
-    def _get_content(self, html_body: str):
+    def _get_content(self, html_body_soup: BeautifulSoup):
         raise NotImplementedError()
 
     def _crawl_html_body(self, html_body: str) -> Dict[str, str]:
@@ -162,10 +162,11 @@ class NewsCrawler(object):
         Crawl HTML Body and extract the information we interest in the webpage.
         Note that, you need to customize each function for the website.
         """
-        title = self._get_title(html_body)
-        author = self._get_author(html_body)
-        date = self._get_date(html_body)
-        content = self._get_content(html_body)
+        html_body_soup = BeautifulSoup(html_body, 'lxml')
+        title = self._get_title(html_body_soup)
+        author = self._get_author(html_body_soup)
+        date = self._get_date(html_body_soup)
+        content = self._get_content(html_body_soup)
 
         return {
             'url': None,

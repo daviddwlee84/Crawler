@@ -14,16 +14,15 @@ class TouTiaoNewsCrawler(NewsCrawler):
         """
         raise NotImplementedError()
 
-    def _get_title(self, html_body: str):
+    def _get_title(self, html_body_soup: BeautifulSoup):
         """
         https://stackoverflow.com/questions/5041008/how-to-find-elements-by-class
         """
-        soup = BeautifulSoup(html_body, 'lxml')
-        return soup.select_one('.article-title').text
+        return html_body_soup.select_one('.article-title').text
 
-    def _get_author(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        article_sub = soup.find('div', attrs={'class': 'article-sub'})
+    def _get_author(self, html_body_soup: BeautifulSoup):
+        article_sub = html_body_soup.find(
+            'div', attrs={'class': 'article-sub'})
         # https://stackoverflow.com/questions/32063985/deleting-a-div-with-a-particlular-class-using-beautifulsoup
         # for span in article_sub.find_all('span', _class='original'):
         #     span.decompose()
@@ -31,17 +30,16 @@ class TouTiaoNewsCrawler(NewsCrawler):
 
         return article_sub.find_all('span')[1].text
 
-    def _get_date(self, html_body: str):
+    def _get_date(self, html_body_soup: BeautifulSoup):
         """
         https://github.com/akoumjian/datefinder
         """
-        soup = BeautifulSoup(html_body, 'lxml')
-        article_sub = soup.find('div', attrs={'class': 'article-sub'})
+        article_sub = html_body_soup.find(
+            'div', attrs={'class': 'article-sub'})
         return list(datefinder.find_dates(article_sub.text))[0]
 
-    def _get_content(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        article = soup.find('article').text
+    def _get_content(self, html_body_soup: BeautifulSoup):
+        article = html_body_soup.find('article').text
         return article
 
 

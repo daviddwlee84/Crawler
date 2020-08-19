@@ -7,33 +7,30 @@ class NetEaseNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/neteast_news.json'):
         super().__init__(store_in_memory, store_in_file)
 
-    def _get_title(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        return soup.find('h1').text
+    def _get_title(self, html_body_soup: BeautifulSoup):
+        return html_body_soup.find('h1').text
 
-    def _get_author(self, html_body: str):
+    def _get_author(self, html_body_soup: BeautifulSoup):
         """
         TODO: Still need to refine this
 
         Information can be found in <head> <meta name="author">
         Information can be found in <head> <meta property="article:author">
         """
-        soup = BeautifulSoup(html_body, 'lxml')
-        return soup.select_one('.ep-editor').text
+        return html_body_soup.select_one('.ep-editor').text
 
-    def _get_date(self, html_body: str):
+    def _get_date(self, html_body_soup: BeautifulSoup):
         """
         TODO: seems this need some NLP method to extract from content or something
 
         Information can be found in <head> <meta name="article:published_time">
         """
-        soup = BeautifulSoup(html_body, 'lxml')
-        post_time_source = soup.find('div', {'class': 'post_time_source'})
+        post_time_source = html_body_soup.find(
+            'div', {'class': 'post_time_source'})
         return list(datefinder.find_dates(post_time_source.text))[0]
 
-    def _get_content(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        article = soup.find('div', {'class': 'post_body'}).text
+    def _get_content(self, html_body_soup: BeautifulSoup):
+        article = html_body_soup.find('div', {'class': 'post_body'}).text
         return article
 
 

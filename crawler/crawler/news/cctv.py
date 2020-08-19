@@ -18,55 +18,51 @@ class CCTVNewsCrawler(NewsCrawler):
         # return super()._get_raw_html(url, specific_encoding='ISO-8859-1')
         return super()._get_raw_html(url, force_encode=True)
 
-    def _get_title(self, html_body: str):
+    def _get_title(self, html_body_soup: BeautifulSoup):
         """
         Seems there might have some dirty content here
         """
-        soup = BeautifulSoup(html_body, 'lxml')
         if self.domain_prefix == 'news':
-            title_area = soup.find('div', {'class': 'title_area'})
+            title_area = html_body_soup.find('div', {'class': 'title_area'})
             title = title_area.find('h1').text
         elif self.domain_prefix == 'm.news':
-            title = soup.find('h1').text
+            title = html_body_soup.find('h1').text
 
         return title
 
-    def _get_author(self, html_body: str):
+    def _get_author(self, html_body_soup: BeautifulSoup):
         """
         TODO: need some NLP method to refine or extract
         """
-        soup = BeautifulSoup(html_body, 'lxml')
         if self.domain_prefix == 'news':
-            author_info = soup.find('div', {'class': 'zebian'})
+            author_info = html_body_soup.find('div', {'class': 'zebian'})
             author = author_info.text
         elif self.domain_prefix == 'm.news':
-            function_info = soup.find('div', {'class': 'function'}).find(
+            function_info = html_body_soup.find('div', {'class': 'function'}).find(
                 'span', {'class', 'info'})
             author = function_info.find('a').text
 
         return author.strip()
 
-    def _get_date(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-
+    def _get_date(self, html_body_soup: BeautifulSoup):
         if self.domain_prefix == 'news':
-            title_area = soup.find('div', {'class': 'title_area'})
+            title_area = html_body_soup.find('div', {'class': 'title_area'})
             text_contain_date = title_area.find('div', {'class', 'info1'}).text
         elif self.domain_prefix == 'm.news':
-            function_info = soup.find('div', {'class': 'function'}).find(
+            function_info = html_body_soup.find('div', {'class': 'function'}).find(
                 'span', {'class', 'info'})
             text_contain_date = function_info.text
 
-        article_info = soup.find('div', {'class': 'article-info'})
+        article_info = html_body_soup.find('div', {'class': 'article-info'})
         return list(datefinder.find_dates(text_contain_date))[0]
 
-    def _get_content(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
+    def _get_content(self, html_body_soup: BeautifulSoup):
         if self.domain_prefix == 'news':
-            content_area = soup.find('div', {'class': 'content_area'})
+            content_area = html_body_soup.find(
+                'div', {'class': 'content_area'})
             article = content_area.text
         elif self.domain_prefix == 'm.news':
-            content_area = soup.find('div', {'class': 'cnt_bd'})
+            content_area = html_body_soup.find('div', {'class': 'cnt_bd'})
             paragraphs = content_area.find_all('p')
             article = '\n\n'.join((paragraph.text for paragraph in paragraphs))
 

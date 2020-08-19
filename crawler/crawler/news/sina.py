@@ -8,27 +8,23 @@ class SinaNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/sina_news.json'):
         super().__init__(store_in_memory, store_in_file)
 
-    def _get_title(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        return soup.find('h1', {'class': 'main-title'}).text
+    def _get_title(self, html_body_soup: BeautifulSoup):
+        return html_body_soup.find('h1', {'class': 'main-title'}).text
 
-    def _get_author(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        date_source = soup.find('div', {'class': 'date-source'})
+    def _get_author(self, html_body_soup: BeautifulSoup):
+        date_source = html_body_soup.find('div', {'class': 'date-source'})
         return date_source.find('a').text
 
-    def _get_date(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        date_source = soup.find('div', {'class': 'date-source'})
+    def _get_date(self, html_body_soup: BeautifulSoup):
+        date_source = html_body_soup.find('div', {'class': 'date-source'})
         if not date_source:
-            date_source = soup.find('span', {'class': 'date'})
+            date_source = html_body_soup.find('span', {'class': 'date'})
         return list(datefinder.find_dates(date_source.text))[0]
 
-    def _get_content(self, html_body: str):
-        soup = BeautifulSoup(html_body, 'lxml')
-        article = soup.find('div', {'id': 'article_content'})
+    def _get_content(self, html_body_soup: BeautifulSoup):
+        article = html_body_soup.find('div', {'id': 'article_content'})
         if not article:
-            article = soup.find('div', {'id': 'article'})
+            article = html_body_soup.find('div', {'id': 'article'})
         return article.text.strip()
 
 

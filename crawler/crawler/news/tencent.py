@@ -7,20 +7,19 @@ class TencentNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/tencent_news.json'):
         super().__init__(store_in_memory, store_in_file)
 
-    def _get_title(self, html_body: str):
+    def _get_title(self, html_body_soup: BeautifulSoup):
         """
         https://stackoverflow.com/questions/5041008/how-to-find-elements-by-class
         """
-        soup = BeautifulSoup(html_body, 'lxml')
-        return soup.find('h1').text
+        return html_body_soup.find('h1').text
 
-    def _get_author(self, html_body: str):
+    def _get_author(self, html_body_soup: BeautifulSoup):
         """
         TODO: seems this need some NLP method to extract from content or something
         """
         return None
 
-    def _get_date(self, html_body: str):
+    def _get_date(self, html_body_soup: BeautifulSoup):
         """
         TODO: seems this need some NLP method to extract from content or something
 
@@ -28,12 +27,11 @@ class TencentNewsCrawler(NewsCrawler):
         """
         return None
 
-    def _get_content(self, html_body: str):
+    def _get_content(self, html_body_soup: BeautifulSoup):
         """
         Information can be found in <head> <meta name="description">
         """
-        soup = BeautifulSoup(html_body, 'lxml')
-        article = soup.find('div', {'class': 'content-article'}).text
+        article = html_body_soup.find('div', {'class': 'content-article'}).text
         return article
 
 
