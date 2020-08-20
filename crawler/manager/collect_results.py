@@ -1,9 +1,17 @@
 # Search result based on combined results
-from combine_results import CombineResult
 from typing import List
 import pandas as pd
 import datefinder
 
+if __name__ == "__main__":
+    import sys
+    import os
+    # https://stackoverflow.com/questions/5137497/find-current-directory-and-files-directory
+    # curr_dir = os.path.dirname(os.path.abspath(__file__))
+    curr_dir = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(os.path.join(curr_dir, '../..'))
+
+from crawler.manager.combine_results import CombineResult
 
 class ResultFilter(object):
     def __init__(self, result_tsv: str, update_inplace: bool = False):
@@ -58,6 +66,6 @@ class ResultFilter(object):
 
 
 if __name__ == "__main__":
-    manager = ResultFilter('../../result/news/all_news.tsv')
+    manager = ResultFilter(os.path.join(curr_dir, '../../result/news/all_news.tsv'))
     print(manager.filter_with_keywords(['日本女高中生', 'TikTok']))
     print(manager.filter_date_range('2020/8/19', '2020/8/20'))
