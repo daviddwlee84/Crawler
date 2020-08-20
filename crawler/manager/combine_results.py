@@ -50,28 +50,38 @@ class CombineResult(object):
                     # ValueError: If using all scalar values, you must pass an index
                     # https://stackoverflow.com/questions/17839973/constructing-pandas-dataframe-from-values-in-variables-gives-valueerror-if-usi
                     single_result = {
-                        key: [value] for key, value in single_result.items() if key in self._simplify_columns}
+                        key: value for key, value in single_result.items() if key in self._simplify_columns}
                 to_append = pd.DataFrame(
-                    single_result).astype(self._default_data_type)
+                    single_result, index=[0]).astype(self._default_data_type)
                 self.data = self.data.append(to_append, ignore_index=True)
 
         return self.data.copy()
+
+    def load_from_tsv(self, tsv_path: str) -> pd.DataFrame:
+        self.data = pd.read_csv(tsv_path, sep='\t')
+        data_type = {key: value for key, value in self._default_data_type.items(
+        ) if key in self.data.columns.to_list()}
+        self.data = self.data.astype(data_type, copy=False)
 
     def save(self, tsv_path: str, store_simplify: bool = True):
         if not self._simplify and store_simplify:
             # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.drop.html
             # https://stackoverflow.com/questions/13411544/delete-column-from-pandas-dataframe
-            self.data[self._simplify_columns].to_csv(tsv_path, sep='\t')
-        self.data.to_csv(tsv_path, sep='\t')
+            self.data[self._simplify_columns].to_csv(
+                tsv_path, sep='\t', index=False)
+        else:
+            self.data.to_csv(tsv_path, sep='\t', index=False)
 
 
 if __name__ == "__main__":
     from glob import glob
-    manager = CombineResult(simplify=True)
+    manager = CombineResult(simplify=False)
     for json_file in glob('../../result/news/*.json'):
         manager.load_from_json(json_file)
 
     print(manager.data)
-    # manager.save('../../result/news/all_news.tsv')
+    manager.save('../../result/news/all_news.tsv', store_simplify=True)
+
+    manager.load_from_tsv('../../result/news/all_news.tsv')
     import ipdb
     ipdb.set_trace()
