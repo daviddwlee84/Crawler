@@ -104,13 +104,13 @@ class NewsCrawler(object):
 
     # ===== HTML Head ===== #
 
-    def _get_html_title(self, html: str):
+    def _get_html_title(self, html: str) -> str:
         soup = BeautifulSoup(html, 'lxml')
         return soup.title.string
 
     def _get_meta_data(self, html: str, names: List[str] = ['keywords', 'author', 'source', 'description', 'mediaid', 'apub:time'],
                        properties: List[str] = ['og:type', 'og:release_date', 'og:description', 'article:published_time', 'article:author'],
-                       itemprops: List[str] = ['datePublished', 'dateUpdate']):
+                       itemprops: List[str] = ['datePublished', 'dateUpdate']) -> Dict[str, str]:
         """
         https://stackoverflow.com/questions/36768068/get-meta-tag-content-property-with-beautifulsoup-and-python
         """
@@ -145,16 +145,16 @@ class NewsCrawler(object):
 
     # ===== HTML Body ===== #
 
-    def _get_title(self, html_body_soup: BeautifulSoup):
+    def _get_title(self, html_body_soup: BeautifulSoup) -> str:
         raise NotImplementedError()
 
-    def _get_author(self, html_body_soup: BeautifulSoup):
+    def _get_author(self, html_body_soup: BeautifulSoup) -> str:
         raise NotImplementedError()
 
-    def _get_date(self, html_body_soup: BeautifulSoup):
+    def _get_date(self, html_body_soup: BeautifulSoup) -> datetime:
         raise NotImplementedError()
 
-    def _get_content(self, html_body_soup: BeautifulSoup):
+    def _get_content(self, html_body_soup: BeautifulSoup) -> str:
         raise NotImplementedError()
 
     def _crawl_html_body(self, html_body: str) -> Dict[str, str]:
@@ -180,26 +180,37 @@ class NewsCrawler(object):
             'content': content,
         }
 
+    # ===== Additional Info ===== #
+
+    def _update_additional_info(self, dict_to_update: Dict[str, str], include_date: bool = True) -> None:
+        if include_date:
+            # https://www.programiz.com/python-programming/datetime/current-time
+            dict_to_update['parse_date'] = datetime.now()
+
     # ===== Public Methods ===== #
 
     def crawl_html(self, html: str, input_body_only: bool = False, url: str = None) -> Dict[str, str]:
         """
         Wrapper for _craw_html_body
 
-        We store result to memory and file here, if specified.
+        Can be consider as the main method.
+        That we will store result to memory and file here, if specified.
 
         The input_body_only is used to support that the crawled result of
         RetroIndex only store HTML body
         """
+        # Add information in HTML Body
         if input_body_only:
             html_body = html
         else:
             html_body = self._get_html_body(html)
-
         result = self._crawl_html_body(html_body)
+
+        # Add information in HTML Head
         if not input_body_only:
             self._update_info_in_head(result, html)
 
+        # Add information in URL
         if url:
             # https://stackoverflow.com/questions/9626535/get-protocol-host-name-from-url
             _parsed_uri = urlparse(url)
@@ -207,6 +218,10 @@ class NewsCrawler(object):
             result['url'] = url
             result['domain'] = domain
 
+        # Add additional information
+        self._update_additional_info(result)
+
+        # Store parsed data
         if self._store_in_memory:
             # https://stackoverflow.com/questions/51774826/append-dictionary-to-data-frame
             self.data = self.data.append(result, ignore_index=True)
@@ -231,6 +246,9 @@ class NewsCrawler(object):
         return result
 
     def crawl_urls(self, urls: List[str]) -> List[Dict[str, str]]:
+        """
+        TODO: parallel parse url with multi-thread.
+        """
         results = []
         for url in tqdm(urls):
             result = self.crawl_single_url(url)
