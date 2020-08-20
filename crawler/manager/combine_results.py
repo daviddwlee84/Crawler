@@ -63,6 +63,8 @@ class CombineResult(object):
         ) if key in self.data.columns.to_list()}
         self.data = self.data.astype(data_type, copy=False)
 
+        return self.data.copy()
+
     def save(self, tsv_path: str, store_simplify: bool = True):
         if not self._simplify and store_simplify:
             # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.drop.html

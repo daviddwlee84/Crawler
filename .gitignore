@@ -1,4 +1,5 @@
 result/news/*.json
+result/news/*.tsv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
