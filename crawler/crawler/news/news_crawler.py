@@ -169,15 +169,15 @@ class NewsCrawler(object):
         content = self._get_content(html_body_soup)
 
         return {
-            'url': None,
-            'domain': None,
-            'html_title': None,
-            'meta': None,
-            'html_body': html_body,
-            'title': title,
-            'author': author,
-            'date': date,
-            'content': content,
+            'url': None,  # str
+            'domain': None,  # str
+            'html_title': None,  # str
+            'meta': None,  # Dict[str, str]
+            'html_body': html_body,  # str
+            'title': title,  # str
+            'author': author,  # str
+            'date': date,  # datetime
+            'content': content,  # str
         }
 
     # ===== Additional Info ===== #
