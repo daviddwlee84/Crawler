@@ -16,6 +16,7 @@ default_data_type = {
     'date': 'datetime64[ns]',
     # 'content': 'str',
     'parse_date': 'datetime64[ns]',
+    # 'meta': 'object',  # there is some problem of storing dict in pandas
 }
 
 
@@ -83,6 +84,7 @@ if __name__ == "__main__":
 
     print(manager.data)
     manager.save('../../result/news/all_news.tsv', store_simplify=True)
+    # manager.save('../../result/news/all_news.tsv', store_simplify=False)
 
     manager.load_from_tsv('../../result/news/all_news.tsv')
     import ipdb

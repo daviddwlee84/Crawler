@@ -113,6 +113,9 @@ class NewsCrawler(object):
                        itemprops: List[str] = ['datePublished', 'dateUpdate']) -> Dict[str, str]:
         """
         https://stackoverflow.com/questions/36768068/get-meta-tag-content-property-with-beautifulsoup-and-python
+
+        Seems pandas can't store "dict" object, (but it's fine in json file),
+        consider to store in list if the meta data content is necessary
         """
         soup = BeautifulSoup(html, 'lxml')
         metadata = {}
