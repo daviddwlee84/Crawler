@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import datefinder
 
 
-class NetEaseNewsCrawler(NewsCrawler):
+class SohuNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/sohu_news.json'):
         super().__init__(store_in_memory, store_in_file)
 
@@ -28,7 +28,7 @@ class NetEaseNewsCrawler(NewsCrawler):
 
 
 if __name__ == "__main__":
-    crawler = NetEaseNewsCrawler()
+    crawler = SohuNewsCrawler()
     crawler.crawl_single_url(
         'https://www.sohu.com/a/413813393_267106')  # success!!!
 
