@@ -35,7 +35,7 @@ class NewsCrawler(object):
         * selectolax
           * https://github.com/rushter/selectolax
         """
-        self._store_in_memory = store_in_file
+        self._store_in_memory = store_in_memory
         self._store_in_file = store_in_file
         if self._store_in_memory:
             self.data = pd.DataFrame()
