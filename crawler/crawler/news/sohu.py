@@ -20,7 +20,7 @@ class SohuNewsCrawler(NewsCrawler):
 
     def _get_date(self, html_body_soup: BeautifulSoup):
         article_info = html_body_soup.find('div', {'class': 'article-info'})
-        return list(datefinder.find_dates(article_info.text))[0]
+        return next(datefinder.find_dates(article_info.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
         article = html_body_soup.find('article', {'class': 'article'}).text

@@ -43,6 +43,8 @@ class CombineResult(object):
         The file format of json is each single crawling result one row
 
         TODO: see if pd.read_json can simplify this code
+
+        TODO: add tqdm
         """
         with open(json_path, 'r', encoding='utf-8') as fp:
             for line in fp:

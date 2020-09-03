@@ -36,7 +36,7 @@ class TouTiaoNewsCrawler(NewsCrawler):
         """
         article_sub = html_body_soup.find(
             'div', attrs={'class': 'article-sub'})
-        return list(datefinder.find_dates(article_sub.text))[0]
+        return next(datefinder.find_dates(article_sub.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
         article = html_body_soup.find('article').text

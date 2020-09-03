@@ -31,7 +31,7 @@ class TencentNewsCrawler(NewsCrawler):
         time_span = html_body_soup.find('span', {'class', 'a_time'})
         if not time_span:
             time_span = html_body_soup.find('span', {'class', 'pubTime'})
-        return list(datefinder.find_dates(time_span.text))[0]
+        return next(datefinder.find_dates(time_span.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup) -> str:
         """
@@ -50,12 +50,13 @@ class TencentNewsCrawler(NewsCrawler):
             text = tab.sub('\t', text)
             text = rchar.sub('\r', text)
             text = newline.sub('\n', text)
-            
+
             return text
 
         article = html_body_soup.find('div', {'class': 'content-article'})
         if not article:
-            article = html_body_soup.find('div', {'class': 'Cnt-Main-Article-QQ'})
+            article = html_body_soup.find(
+                'div', {'class': 'Cnt-Main-Article-QQ'})
         if not article:
             article = html_body_soup.find('div', {'class': 'bd'})
         return clean_up(article.text)

@@ -54,7 +54,7 @@ class CCTVNewsCrawler(NewsCrawler):
             text_contain_date = function_info.text
 
         article_info = html_body_soup.find('div', {'class': 'article-info'})
-        return list(datefinder.find_dates(text_contain_date))[0]
+        return next(datefinder.find_dates(text_contain_date))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
         if self.domain_prefix == 'news':

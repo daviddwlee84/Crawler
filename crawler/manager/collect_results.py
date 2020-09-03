@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
 from crawler.manager.combine_results import CombineResult
 
+
 class ResultFilter(object):
     def __init__(self, result_tsv: str, update_inplace: bool = False):
         self.data = CombineResult().load_from_tsv(result_tsv)
@@ -51,8 +52,8 @@ class ResultFilter(object):
 
         https://stackoverflow.com/questions/29370057/select-dataframe-rows-between-two-dates
         """
-        from_date = list(datefinder.find_dates(from_date))[0]
-        to_date = list(datefinder.find_dates(to_date))[0]
+        from_date = next(datefinder.find_dates(from_date))
+        to_date = next(datefinder.find_dates(to_date))
 
         mask = (from_date <= self.data[date_col]) & (
             self.data[date_col] <= to_date)
@@ -66,6 +67,7 @@ class ResultFilter(object):
 
 
 if __name__ == "__main__":
-    manager = ResultFilter(os.path.join(curr_dir, '../../result/news/all_news.tsv'))
+    manager = ResultFilter(os.path.join(
+        curr_dir, '../../result/news/all_news.tsv'))
     print(manager.filter_with_keywords(['日本女高中生', 'TikTok']))
     print(manager.filter_date_range('2020/8/19', '2020/8/20'))
