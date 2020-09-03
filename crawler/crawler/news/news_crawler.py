@@ -192,7 +192,7 @@ class NewsCrawler(object):
 
     # ===== Public Methods ===== #
 
-    def crawl_html(self, html: str, input_body_only: bool = False, url: str = None) -> Dict[str, str]:
+    def crawl_html(self, html: str, input_body_only: bool = False, url: str = None, ignore_parse_error: bool = False) -> Dict[str, str]:
         """
         Wrapper for _craw_html_body
 
@@ -207,7 +207,14 @@ class NewsCrawler(object):
             html_body = html
         else:
             html_body = self._get_html_body(html)
-        result = self._crawl_html_body(html_body)
+
+        try:
+            result = self._crawl_html_body(html_body)
+        except Exception as e:
+            if ignore_parse_error:
+                return None
+            else:
+                raise e
 
         # Add information in HTML Head
         if not input_body_only:
