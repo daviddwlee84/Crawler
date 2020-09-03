@@ -1,6 +1,7 @@
 from news_crawler import NewsCrawler
 from bs4 import BeautifulSoup
 import datefinder
+import re
 
 
 class NetEaseNewsCrawler(NewsCrawler):
@@ -27,14 +28,42 @@ class NetEaseNewsCrawler(NewsCrawler):
         """
         post_time_source = html_body_soup.find(
             'div', {'class': 'post_time_source'})
-        return list(datefinder.find_dates(post_time_source.text))[0]
+        return next(datefinder.find_dates(post_time_source.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
-        article = html_body_soup.find('div', {'class': 'post_body'}).text
-        return article
+
+        def clean_up(text: str) -> str:
+            # https://stackoverflow.com/questions/16720541/python-string-replace-regular-expression
+            tab = re.compile('#TAB#')
+            rchar = re.compile('#R#')
+            newline = re.compile('#N#')
+
+            text = tab.sub('\t', text)
+            text = rchar.sub('\r', text)
+            text = newline.sub('\n', text)
+
+            return text
+
+        article = html_body_soup.find('div', {'class': 'post_text'})
+        if not article:
+            article = html_body_soup.find('div', {'class': 'post_body'})
+        return clean_up(article.text)
+
+
+def test_post_time():
+    test_str = '<div class="post_time_source">#N#                2018-01-16 17:44:59\u3000来源: <a id="ne_article_source" href="http://www.cqcb.com/headline/2018-01-16/640599_pc.html" target="_blank">重庆晨报上游新闻</a>#N#              #TAB##N#                <a href="http://jubao.aq.163.com/" target="_blank" class="post_jubao" title="举报">举报</a>#N#            </div>'
+    post_time_source = BeautifulSoup(test_str, 'lxml').find(
+        'div', {'class': 'post_time_source'})
+    # for date in datefinder.find_dates(post_time_source.text):
+    #     print(date)
+    print(next(datefinder.find_dates(post_time_source.text)))
 
 
 if __name__ == "__main__":
+    # test_post_time()
+    # import ipdb
+    # ipdb.set_trace()
+
     crawler = NetEaseNewsCrawler()
     crawler.crawl_single_url(
         'https://money.163.com/20/0819/13/FKD7UNN100258105.html')  # success!!!
