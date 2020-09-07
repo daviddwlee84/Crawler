@@ -5,6 +5,18 @@ from urllib.parse import urlparse
 import re
 
 
+def clean_up(text: str) -> str:
+    tab = re.compile('#TAB#')
+    rchar = re.compile('#R#')
+    newline = re.compile('#N#')
+
+    text = tab.sub('\t', text)
+    text = rchar.sub('\r', text)
+    text = newline.sub('\n', text)
+
+    return text
+
+
 class CCTVNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/cctv_news.json', domain_prefix: str = 'news'):
         """
@@ -29,7 +41,7 @@ class CCTVNewsCrawler(NewsCrawler):
         elif self.domain_prefix == 'm.news':
             title = html_body_soup.find('h1').text
 
-        return title
+        return clean_up(title).strip()
 
     def _get_author(self, html_body_soup: BeautifulSoup):
         """
@@ -43,7 +55,7 @@ class CCTVNewsCrawler(NewsCrawler):
                 'span', {'class', 'info'})
             author = function_info.find('a').text
 
-        return author.strip()
+        return clean_up(author).strip()
 
     def _get_date(self, html_body_soup: BeautifulSoup):
         if self.domain_prefix == 'news':
@@ -58,18 +70,6 @@ class CCTVNewsCrawler(NewsCrawler):
         return next(datefinder.find_dates(text_contain_date))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
-
-        def clean_up(text: str) -> str:
-            tab = re.compile('#TAB#')
-            rchar = re.compile('#R#')
-            newline = re.compile('#N#')
-
-            text = tab.sub('\t', text)
-            text = rchar.sub('\r', text)
-            text = newline.sub('\n', text)
-
-            return text
-
         if self.domain_prefix == 'news':
             content_area = html_body_soup.find(
                 'div', {'class': 'content_area'})

@@ -4,12 +4,25 @@ import datefinder
 import re
 
 
+def clean_up(text: str) -> str:
+    tab = re.compile('#TAB#')
+    rchar = re.compile('#R#')
+    newline = re.compile('#N#')
+
+    text = tab.sub('\t', text)
+    text = rchar.sub('\r', text)
+    text = newline.sub('\n', text)
+
+    return text
+
+
 class NetEaseNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/neteast_news.json'):
         super().__init__(store_in_memory, store_in_file)
 
     def _get_title(self, html_body_soup: BeautifulSoup):
-        return html_body_soup.find('h1').text
+        title = html_body_soup.find('h1').text
+        return clean_up(title).strip()
 
     def _get_author(self, html_body_soup: BeautifulSoup):
         """
@@ -18,7 +31,8 @@ class NetEaseNewsCrawler(NewsCrawler):
         Information can be found in <head> <meta name="author">
         Information can be found in <head> <meta property="article:author">
         """
-        return html_body_soup.select_one('.ep-editor').text
+        author = html_body_soup.select_one('.ep-editor').text
+        return clean_up(author).strip()
 
     def _get_date(self, html_body_soup: BeautifulSoup):
         """
@@ -31,19 +45,6 @@ class NetEaseNewsCrawler(NewsCrawler):
         return next(datefinder.find_dates(post_time_source.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
-
-        def clean_up(text: str) -> str:
-            # https://stackoverflow.com/questions/16720541/python-string-replace-regular-expression
-            tab = re.compile('#TAB#')
-            rchar = re.compile('#R#')
-            newline = re.compile('#N#')
-
-            text = tab.sub('\t', text)
-            text = rchar.sub('\r', text)
-            text = newline.sub('\n', text)
-
-            return text
-
         article = html_body_soup.find('div', {'class': 'post_text'})
         if not article:
             article = html_body_soup.find('div', {'class': 'post_body'})

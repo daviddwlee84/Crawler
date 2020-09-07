@@ -4,6 +4,18 @@ import datefinder
 import re
 
 
+def clean_up(text: str) -> str:
+    tab = re.compile('#TAB#')
+    rchar = re.compile('#R#')
+    newline = re.compile('#N#')
+
+    text = tab.sub('\t', text)
+    text = rchar.sub('\r', text)
+    text = newline.sub('\n', text)
+
+    return text
+
+
 class TouTiaoNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/toutiao_news.json'):
         # https://stackoverflow.com/questions/576169/understanding-python-super-with-init-methods
@@ -19,7 +31,8 @@ class TouTiaoNewsCrawler(NewsCrawler):
         """
         https://stackoverflow.com/questions/5041008/how-to-find-elements-by-class
         """
-        return html_body_soup.select_one('.article-title').text
+        title = html_body_soup.select_one('.article-title').text
+        return clean_up(title).strip()
 
     def _get_author(self, html_body_soup: BeautifulSoup):
         article_sub = html_body_soup.find(
@@ -29,7 +42,8 @@ class TouTiaoNewsCrawler(NewsCrawler):
         #     span.decompose()
         # return article_sub.find('span').text
 
-        return article_sub.find_all('span')[1].text
+        author = article_sub.find_all('span')[1].text
+        return clean_up(author).strip()
 
     def _get_date(self, html_body_soup: BeautifulSoup):
         """
@@ -40,20 +54,8 @@ class TouTiaoNewsCrawler(NewsCrawler):
         return next(datefinder.find_dates(article_sub.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
-
-        def clean_up(text: str) -> str:
-            tab = re.compile('#TAB#')
-            rchar = re.compile('#R#')
-            newline = re.compile('#N#')
-
-            text = tab.sub('\t', text)
-            text = rchar.sub('\r', text)
-            text = newline.sub('\n', text)
-
-            return text
-
         article = html_body_soup.find('article').text
-        return clean_up(article)
+        return clean_up(article).strip()
 
 
 if __name__ == "__main__":

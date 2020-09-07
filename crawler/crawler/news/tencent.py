@@ -4,6 +4,19 @@ import datefinder
 import re
 
 
+def clean_up(text: str) -> str:
+    # https://stackoverflow.com/questions/16720541/python-string-replace-regular-expression
+    tab = re.compile('#TAB#')
+    rchar = re.compile('#R#')
+    newline = re.compile('#N#')
+
+    text = tab.sub('\t', text)
+    text = rchar.sub('\r', text)
+    text = newline.sub('\n', text)
+
+    return text
+
+
 class TencentNewsCrawler(NewsCrawler):
     def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/tencent_news.json'):
         super().__init__(store_in_memory, store_in_file)
@@ -12,7 +25,8 @@ class TencentNewsCrawler(NewsCrawler):
         """
         https://stackoverflow.com/questions/5041008/how-to-find-elements-by-class
         """
-        return html_body_soup.find('h1').text
+        title = html_body_soup.find('h1').text
+        return clean_up(title).strip()
 
     def _get_author(self, html_body_soup: BeautifulSoup):
         """
@@ -40,26 +54,13 @@ class TencentNewsCrawler(NewsCrawler):
         TODO: or we can try to do like this
         https://stackoverflow.com/questions/18725760/beautifulsoup-findall-given-multiple-classes
         """
-
-        def clean_up(text: str) -> str:
-            # https://stackoverflow.com/questions/16720541/python-string-replace-regular-expression
-            tab = re.compile('#TAB#')
-            rchar = re.compile('#R#')
-            newline = re.compile('#N#')
-
-            text = tab.sub('\t', text)
-            text = rchar.sub('\r', text)
-            text = newline.sub('\n', text)
-
-            return text
-
         article = html_body_soup.find('div', {'class': 'content-article'})
         if not article:
             article = html_body_soup.find(
                 'div', {'class': 'Cnt-Main-Article-QQ'})
         if not article:
             article = html_body_soup.find('div', {'class': 'bd'})
-        return clean_up(article.text)
+        return clean_up(article.text).strip()
 
 
 if __name__ == "__main__":
