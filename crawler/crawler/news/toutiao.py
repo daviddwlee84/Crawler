@@ -1,6 +1,7 @@
 from news_crawler import NewsCrawler
 from bs4 import BeautifulSoup
 import datefinder
+import re
 
 
 class TouTiaoNewsCrawler(NewsCrawler):
@@ -39,8 +40,20 @@ class TouTiaoNewsCrawler(NewsCrawler):
         return next(datefinder.find_dates(article_sub.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
+
+        def clean_up(text: str) -> str:
+            tab = re.compile('#TAB#')
+            rchar = re.compile('#R#')
+            newline = re.compile('#N#')
+
+            text = tab.sub('\t', text)
+            text = rchar.sub('\r', text)
+            text = newline.sub('\n', text)
+
+            return text
+
         article = html_body_soup.find('article').text
-        return article
+        return clean_up(article)
 
 
 if __name__ == "__main__":

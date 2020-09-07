@@ -2,10 +2,11 @@ from news_crawler import NewsCrawler
 from bs4 import BeautifulSoup
 import datefinder
 from urllib.parse import urlparse
+import re
 
 
 class CCTVNewsCrawler(NewsCrawler):
-    def __init__(self, domain_prefix: str = 'news', store_in_memory: bool = True, store_in_file: str = '../../../result/news/cctv_news.json'):
+    def __init__(self, store_in_memory: bool = True, store_in_file: str = '../../../result/news/cctv_news.json', domain_prefix: str = 'news'):
         """
         news.cctv.com
         m.news.cctv.com
@@ -57,6 +58,18 @@ class CCTVNewsCrawler(NewsCrawler):
         return next(datefinder.find_dates(text_contain_date))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
+
+        def clean_up(text: str) -> str:
+            tab = re.compile('#TAB#')
+            rchar = re.compile('#R#')
+            newline = re.compile('#N#')
+
+            text = tab.sub('\t', text)
+            text = rchar.sub('\r', text)
+            text = newline.sub('\n', text)
+
+            return text
+
         if self.domain_prefix == 'news':
             content_area = html_body_soup.find(
                 'div', {'class': 'content_area'})
@@ -66,7 +79,7 @@ class CCTVNewsCrawler(NewsCrawler):
             paragraphs = content_area.find_all('p')
             article = '\n\n'.join((paragraph.text for paragraph in paragraphs))
 
-        return article
+        return clean_up(article)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from news_crawler import NewsCrawler
 from bs4 import BeautifulSoup
 import datefinder
 from urllib.parse import urlparse
+import re
 
 
 class SinaNewsCrawler(NewsCrawler):
@@ -22,10 +23,22 @@ class SinaNewsCrawler(NewsCrawler):
         return next(datefinder.find_dates(date_source.text))
 
     def _get_content(self, html_body_soup: BeautifulSoup):
+
+        def clean_up(text: str) -> str:
+            tab = re.compile('#TAB#')
+            rchar = re.compile('#R#')
+            newline = re.compile('#N#')
+
+            text = tab.sub('\t', text)
+            text = rchar.sub('\r', text)
+            text = newline.sub('\n', text)
+
+            return text
+
         article = html_body_soup.find('div', {'id': 'article_content'})
         if not article:
             article = html_body_soup.find('div', {'id': 'article'})
-        return article.text.strip()
+        return clean_up(article.text.strip())
 
 
 if __name__ == "__main__":
