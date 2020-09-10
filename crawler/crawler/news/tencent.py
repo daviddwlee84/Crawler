@@ -68,8 +68,9 @@ if __name__ == "__main__":
 
     # https://new.qq.com/omn/TWF20200/TWF2020081900691700.html
 
+    # after we update _get_date, because new web page doesn't have it
     crawler.crawl_single_url(
-        'https://new.qq.com/rain/a/20200819A0DOVH00')  # success!!
+        'https://new.qq.com/rain/a/20200819A0DOVH00', ignore_parse_error=['author', 'date'])  # success!!
 
     # TODO: write Testcase by evaluate parse result with test_html_body/tencent.json
     with open('test_html_body/tencent.html', 'r') as fp:

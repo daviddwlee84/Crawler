@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 import warnings
-from typing import Dict, List
+from typing import Dict, List, Callable, Any
 import pandas as pd
 import json
 from bs4 import BeautifulSoup
@@ -9,7 +9,7 @@ from tqdm import tqdm
 from datetime import date, datetime
 
 
-def json_serial(obj):
+def json_serial(obj: Any):
     """
     JSON serializer for objects not serializable by default json code
 
@@ -21,6 +21,17 @@ def json_serial(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
+
+
+def exception_wrapper(dont_raise: bool, func: Callable[[Any], Any], *args) -> Any:
+    try:
+        result = func(*args)
+    except Exception as e:
+        if dont_raise:
+            return None
+        else:
+            raise e
+    return result
 
 
 class NewsCrawler(object):
@@ -160,16 +171,20 @@ class NewsCrawler(object):
     def _get_content(self, html_body_soup: BeautifulSoup) -> str:
         raise NotImplementedError()
 
-    def _crawl_html_body(self, html_body: str) -> Dict[str, str]:
+    def _crawl_html_body(self, html_body: str, ignore_parse_error: List[str] = []) -> Dict[str, str]:
         """
         Crawl HTML Body and extract the information we interest in the webpage.
         Note that, you need to customize each function for the website.
         """
         html_body_soup = BeautifulSoup(html_body, 'lxml')
-        title = self._get_title(html_body_soup)
-        author = self._get_author(html_body_soup)
-        date = self._get_date(html_body_soup)
-        content = self._get_content(html_body_soup)
+        title = exception_wrapper('title' in ignore_parse_error,
+                                  self._get_title, html_body_soup)
+        author = exception_wrapper('author' in ignore_parse_error,
+                                   self._get_author, html_body_soup)
+        date = exception_wrapper('date' in ignore_parse_error,
+                                 self._get_date, html_body_soup)
+        content = exception_wrapper('content' in ignore_parse_error,
+                                    self._get_content, html_body_soup)
 
         return {
             'url': None,  # str
@@ -192,7 +207,8 @@ class NewsCrawler(object):
 
     # ===== Public Methods ===== #
 
-    def crawl_html(self, html: str, input_body_only: bool = False, url: str = None, ignore_parse_error: bool = False) -> Dict[str, str]:
+    def crawl_html(self, html: str, input_body_only: bool = False, url: str = None,
+                   ignore_parse_error: List[str] = ['author']) -> Dict[str, str]:
         """
         Wrapper for _craw_html_body
 
@@ -208,13 +224,7 @@ class NewsCrawler(object):
         else:
             html_body = self._get_html_body(html)
 
-        try:
-            result = self._crawl_html_body(html_body)
-        except Exception as e:
-            if ignore_parse_error:
-                return None
-            else:
-                raise e
+        result = self._crawl_html_body(html_body, ignore_parse_error)
 
         # Add information in HTML Head
         if not input_body_only:
@@ -243,7 +253,7 @@ class NewsCrawler(object):
 
         return result
 
-    def crawl_single_url(self, url: str) -> Dict[str, str]:
+    def crawl_single_url(self, url: str, ignore_parse_error: List[str] = []) -> Dict[str, str]:
         """
         Crawl single news from an given URL.
         """
@@ -251,17 +261,18 @@ class NewsCrawler(object):
         if not raw_html:
             return None
 
-        result = self.crawl_html(raw_html, input_body_only=False, url=url)
+        result = self.crawl_html(
+            raw_html, input_body_only=False, url=url, ignore_parse_error=ignore_parse_error)
 
         return result
 
-    def crawl_urls(self, urls: List[str]) -> List[Dict[str, str]]:
+    def crawl_urls(self, urls: List[str], ignore_parse_error: List[str] = []) -> List[Dict[str, str]]:
         """
         TODO: parallel parse url with multi-thread.
         """
         results = []
         for url in tqdm(urls):
-            result = self.crawl_single_url(url)
+            result = self.crawl_single_url(url, ignore_parse_error)
             if not result:
                 warnings.warn(f'Fail: {url}')
                 continue
