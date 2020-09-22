@@ -2,7 +2,11 @@
 
 ## Crawlers
 
-### News Crawler
+### [News Crawler](crawler/crawler/news/README.md)
+
+* Base class: `crawler/crawler/news/news_crawler.py`
+
+### [Zhihu Crawler](crawler/crawler/zhihu/README.md)
 
 ## Todo
 
@@ -22,4 +26,5 @@
 
 ### Example
 
+* [**clips/pattern: Web mining module for Python, with tools for scraping, natural language processing, machine learning, network analysis and visualization.**](https://github.com/clips/pattern)
 * [iofu728/spider: 🕷some website spider application base on proxy pool (support http & websocket)](https://github.com/iofu728/spider)
