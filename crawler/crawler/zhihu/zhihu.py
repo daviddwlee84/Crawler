@@ -1,5 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
+from typing import List, Dict
+from functools import lru_cache
+
+
+@lru_cache()
+def _get_html(url: str) -> str:
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+
+    raw_html = requests.get(url, headers=headers)
+
+    if raw_html.status_code == 200:
+        return raw_html.text
+
+    return None
 
 
 class User(object):
@@ -30,16 +45,12 @@ class User(object):
         else:
             url = self.base_url + '/' + tab
 
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+        html = _get_html(url)
+        if not html:
+            return None
 
-        raw_html = requests.get(url, headers=headers)
-
-        if raw_html.status_code == 200:
-            self.page_cache[tab] = raw_html.text
-            return self.page_cache[tab]
-
-        return None
+        self.page_cache[tab] = html
+        return self.page_cache[tab]
 
     # ==== Infos ==== #
 
@@ -60,7 +71,7 @@ class User(object):
 
     # ==== Helper ==== #
 
-    def _get_list_item(self, tab: str):
+    def _get_list_items(self, tab: str) -> List[Dict[str, str]]:
         """
         Get list of item, collect its meta data (title, cover image, "link")
         TODO: next page
@@ -95,7 +106,7 @@ class User(object):
         """
         TODO
         """
-        items = self._get_list_item('answers')
+        items = self._get_list_items('answers')
         return items
 
     def get_zvideos(self):
@@ -151,20 +162,7 @@ class Post(object):
         else:
             assert False, 'Require either id_num or url'
 
-        self.__page = self._get_page()
-
-    # ==== Base Function ==== #
-
-    def _get_page(self):
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-
-        raw_html = requests.get(self.url, headers=headers)
-
-        if raw_html.status_code == 200:
-            return raw_html.text
-
-        return None
+        self.__page = _get_html(url)
 
     # ==== Parsing ==== #
 
@@ -226,7 +224,7 @@ def __test_post():
     post = Post(url='https://zhuanlan.zhihu.com/p/257277844').parse()
     print(post.title)
     print(post.author)
-    # print(post.author.get_answers())
+    print(post.author.get_answers())
     # print(post.content_html)
     print(post.content_raw_text)
 
