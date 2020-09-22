@@ -2,13 +2,10 @@
 
 ## Base Classes
 
-* `people.py`
-  * `User`
-* `question.py`
-  * `Question`
-  * `Answer`
-* `zhuanlan.py`
-  * `Post`
+* `User`
+* `Question`
+* `Answer`
+* `Post`
 
 ## Resources
 
