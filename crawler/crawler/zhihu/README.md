@@ -10,6 +10,7 @@
 ## TODO
 
 * [ ] Deal with if getting html fail problem
+* [ ] Deal with single page too few "List-item" when using request parse html vs. using browser
 
 ## Resources
 

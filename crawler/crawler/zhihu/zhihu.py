@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict
 from functools import lru_cache
+import time
 
 
 @lru_cache()
@@ -22,7 +23,9 @@ class User(object):
         if url:
             self.base_url = url
             assert 'www.zhihu.com/people/' in url, 'Not a valid user url'
+            self.username = url.rsplit('/', 1)[-1]
         elif username:
+            self.username = username
             self.base_url = f'https://www.zhihu.com/people/{username}'
         else:
             assert False, 'Require either username or url'
@@ -32,18 +35,28 @@ class User(object):
 
     # https://www.geeksforgeeks.org/str-vs-repr-in-python/
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.name} ({self.username})'
 
     # ==== Base Function ==== #
 
-    def _get_page(self, tab: str):
-        if tab in self.page_cache:
-            return self.page_cache[tab]
-
+    def _get_tab_base_url(self, tab: str) -> str:
+        """
+        Get tab base url by tab name (zhihu user page)
+        """
         if tab == 'feed':
             url = self.base_url
         else:
             url = self.base_url + '/' + tab
+        return url
+
+    def _get_single_page(self, tab: str):
+        """
+        TODO: consider deprecate this method
+        """
+        if tab in self.page_cache:
+            return self.page_cache[tab]
+
+        url = self._get_tab_base_url(tab)
 
         html = _get_html(url)
         if not html:
@@ -59,7 +72,7 @@ class User(object):
         TODO: there are some other more detail informations
         """
 
-        html = self._get_page('feed')
+        html = self._get_single_page('feed')
         tree = BeautifulSoup(html, 'lxml')
         profile = tree.find(
             'div', {'class': 'ProfileHeader-main'})
@@ -71,7 +84,42 @@ class User(object):
 
     # ==== Helper ==== #
 
-    def _get_list_items(self, tab: str) -> List[Dict[str, str]]:
+    def _get_multi_page_list_items(self, tab: str, method: str = 'get', max_pages: int = float('inf'), next_page_delay: float = 1):
+        """
+        next: keep click "next page"
+        get: zhihu support `?page` get request
+        """
+        assert method in ['next', 'get']
+
+        results = []
+
+        base_url = self._get_tab_base_url(tab)
+
+        if method == 'next':
+            # TODO
+            # while True:
+            #     page_result = self._get_list_items(html)
+            #     results.extend(page_result)
+            #     next_button = tree.find('div', {'class': 'Pagination'}).find(
+            #         'button', {'class': 'PaginationButton-next'})
+
+            #     if not page_result or not next_button:
+            #         break
+            pass
+        elif method == 'get':
+            i = 1
+            while True:
+                html = _get_html(base_url + f'?page={i}')
+                page_result = self._get_list_items(html)
+                if not page_result or i >= max_pages:
+                    break
+                print('Parsed', base_url + f'?page={i}')
+                results.extend(page_result)
+                i += 1
+
+        return results
+
+    def _get_list_items(self, html: str) -> List[Dict[str, str]]:
         """
         Get list of item, collect its meta data (title, cover image, "link")
         TODO: next page
@@ -81,7 +129,6 @@ class User(object):
                 return 'https:' + url
             return url
 
-        html = self._get_page(tab)
         tree = BeautifulSoup(html, 'lxml')
 
         items = []
@@ -114,9 +161,10 @@ class User(object):
 
     def get_answers(self):
         """
-        TODO
+        TODO: switch to multi_page
         """
-        items = self._get_list_items('answers')
+        html = self._get_single_page('answers')
+        items = self._get_list_items(html)
         return items
 
     def get_zvideos(self):
@@ -131,10 +179,10 @@ class User(object):
         """
         pass
 
-    def get_posts(self):
+    def get_posts(self, max_pages: int = float('inf')):
         """
         """
-        items = self._get_list_items('posts')
+        items = self._get_multi_page_list_items('posts', max_pages=max_pages)
         return (
             Post(url=item['url']).parse() for item in items
         )
@@ -166,6 +214,7 @@ class User(object):
 
 class Post(object):
 
+    __page = None
     parsed = False
 
     def __init__(self, id_num: str = None, url: str = None, init_parse: bool = False):
@@ -177,7 +226,6 @@ class Post(object):
         else:
             assert False, 'Require either id_num or url'
 
-        self.__page = _get_html(url)
         if init_parse:
             self.parse()
 
@@ -188,7 +236,7 @@ class Post(object):
 
     def __repr__(self):
         if not self.parsed:
-            self.parse()
+            return '<<Unparsed Post object>>'
         return f'<<{self.title}>>'
 
     # ==== Parsing ==== #
@@ -209,6 +257,8 @@ class Post(object):
         """
         TODO: try lazy parse (only parse when it's used)
         """
+        if not self.__page:
+            self.__page = _get_html(self.url)
         self.parsed = True
 
         main = BeautifulSoup(self.__page, 'lxml').find('main')
@@ -247,9 +297,9 @@ def __test_user():
     # print(user.get_answers())
 
     user = User(username='li_ge_notes')
-    print(user.name)
-    # print(user.get_answers())
-    print(list(user.get_posts()))
+    print(user)
+    print(user.get_answers())
+    print(list(user.get_posts(max_pages=5)))
 
 
 def __test_post():
