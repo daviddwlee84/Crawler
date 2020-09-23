@@ -76,6 +76,11 @@ class User(object):
         Get list of item, collect its meta data (title, cover image, "link")
         TODO: next page
         """
+        def fix_url(url: str):
+            if url.startswith('//'):
+                return 'https:' + url
+            return url
+
         html = self._get_page(tab)
         tree = BeautifulSoup(html, 'lxml')
 
@@ -87,6 +92,11 @@ class User(object):
             # https://stackoverflow.com/questions/6287529/how-to-find-children-of-nodes-using-beautifulsoup
             for tag in article_meta_content.findChildren('meta', recursive=False):
                 item[tag.get('itemprop')] = tag.get('content')
+
+            # Somehow the "url" of "Post" will be "//url" so we have to fix it
+            if 'url' in item:
+                item['url'] = fix_url(item['url'])
+
             author_meta_content = article_meta_content.find(
                 'div', {'class', 'ContentItem-meta'})
             for tag in author_meta_content.find_all('meta'):
@@ -123,9 +133,11 @@ class User(object):
 
     def get_posts(self):
         """
-        TODO
         """
-        pass
+        items = self._get_list_items('posts')
+        return (
+            Post(url=item['url']).parse() for item in items
+        )
 
     def get_columns(self):
         """
@@ -153,7 +165,10 @@ class User(object):
 
 
 class Post(object):
-    def __init__(self, id_num: str = None, url: str = None):
+
+    parsed = False
+
+    def __init__(self, id_num: str = None, url: str = None, init_parse: bool = False):
         if url:
             self.url = url
             assert 'zhuanlan.zhihu.com/p/' in url, 'Not a valid user url'
@@ -163,6 +178,18 @@ class Post(object):
             assert False, 'Require either id_num or url'
 
         self.__page = _get_html(url)
+        if init_parse:
+            self.parse()
+
+    def __str__(self):
+        if not self.parsed:
+            self.parse()
+        return f'<<{self.title}>>'
+
+    def __repr__(self):
+        if not self.parsed:
+            self.parse()
+        return f'<<{self.title}>>'
 
     # ==== Parsing ==== #
 
@@ -182,6 +209,8 @@ class Post(object):
         """
         TODO: try lazy parse (only parse when it's used)
         """
+        self.parsed = True
+
         main = BeautifulSoup(self.__page, 'lxml').find('main')
         article = main.find('article')
 
@@ -209,28 +238,31 @@ class Answer(object):
     def __init__(self):
         pass
 
+# ====== Test ======
+
 
 def __test_user():
-    user = User(url='https://www.zhihu.com/people/wang-jia-48-31')
-    print(user.name)
-    print(user.get_answers())
+    # user = User(url='https://www.zhihu.com/people/wang-jia-48-31')
+    # print(user.name)
+    # print(user.get_answers())
 
     user = User(username='li_ge_notes')
     print(user.name)
-    print(user.get_answers())
+    # print(user.get_answers())
+    print(list(user.get_posts()))
 
 
 def __test_post():
     post = Post(url='https://zhuanlan.zhihu.com/p/257277844').parse()
     print(post.title)
     print(post.author)
-    print(post.author.get_answers())
+    # print(post.author.get_answers())
     # print(post.content_html)
     print(post.content_raw_text)
 
 
 if __name__ == "__main__":
-    # __test_user()
-    __test_post()
+    __test_user()
+    # __test_post()
     import ipdb
     ipdb.set_trace()
