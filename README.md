@@ -10,6 +10,8 @@
 
 ## Todo
 
+News Crawler
+
 * [X] Passing soup object instead of HTML body string
 * [ ] Anti-crawler
 * [ ] Testcase
@@ -23,6 +25,7 @@
 
 * [hellysmile/fake-useragent: up to date simple useragent faker with real world database](https://github.com/hellysmile/fake-useragent)
 * [akoumjian/datefinder: Find dates inside text using Python and get back datetime objects](https://github.com/akoumjian/datefinder)
+* [Decode or Encode Unicode Text - Online Toolz](https://www.online-toolz.com/tools/text-unicode-entities-convertor.php)
 
 ### Example
 

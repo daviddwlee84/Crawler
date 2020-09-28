@@ -1,6 +1,8 @@
 result/news/*.json
 result/news/*.tsv
 
+crawler/utils/chromedriver*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
