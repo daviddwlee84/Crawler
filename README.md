@@ -1,12 +1,24 @@
 # Crawler
 
+## Requirements
+
+```sh
+# Install packages
+pip3 install -r requirements.txt
+
+# Setup driver for your system
+cd crawler/utils
+bash get_chromedriver_Linux.sh
+bash get_chromedriver_WSL.sh
+```
+
 ## Crawlers
 
-### [News Crawler](crawler/crawler/news/README.md)
+### [News Crawler](crawler/crawler/news)
 
 * Base class: `crawler/crawler/news/news_crawler.py`
 
-### [Zhihu Crawler](crawler/crawler/zhihu/README.md)
+### [Zhihu Crawler](crawler/crawler/zhihu)
 
 ## Todo
 
@@ -24,6 +36,7 @@ News Crawler
 ### Useful Tools
 
 * [hellysmile/fake-useragent: up to date simple useragent faker with real world database](https://github.com/hellysmile/fake-useragent)
+* [TheDevFromKer/Fake-Headers: Simple headers generator for requests lib](https://github.com/TheDevFromKer/Fake-Headers)
 * [akoumjian/datefinder: Find dates inside text using Python and get back datetime objects](https://github.com/akoumjian/datefinder)
 * [Decode or Encode Unicode Text - Online Toolz](https://www.online-toolz.com/tools/text-unicode-entities-convertor.php)
 

@@ -4,3 +4,4 @@ pandas
 tqdm
 datefinder
 selenium
+cachetools

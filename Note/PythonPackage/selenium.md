@@ -1,6 +1,7 @@
 # Selenium
 
 * [SeleniumHQ/selenium: A browser automation framework and ecosystem.](https://github.com/SeleniumHQ/selenium)
+* [SeleniumHQ Browser Automation](https://www.selenium.dev/)
 * [Selenium Client Driver — Selenium 3.14 documentation](https://www.selenium.dev/selenium/docs/api/py/)
 
 ## Install WebDriver (first step)
