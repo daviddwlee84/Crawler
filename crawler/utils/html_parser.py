@@ -16,7 +16,8 @@ class HTMLParser(object):
 
     def __init__(self, mode: str = 'requestium',
                 use_cache: bool = True, max_cache_size: int = 10000,
-                 timeout: int = 15, browser: str = 'chrome'):
+                 timeout: int = 15, browser: str = 'chrome',
+                 webdriver_path: str = os.path.join(curr_dir, 'chromedriver')):
         assert mode in ['requests', 'selenium', 'requestium']
         assert browser in ['chrome']
 
@@ -25,7 +26,7 @@ class HTMLParser(object):
         self.use_cache = use_cache
         if use_cache:
             self.html_cache = LRUCache(maxsize=max_cache_size)
-
+        
         if mode == 'requests':
             pass
         elif mode == 'selenium':
@@ -33,10 +34,10 @@ class HTMLParser(object):
             from selenium.webdriver.chrome.options import Options
             chrome_options = Options()  
             chrome_options.add_argument("--headless") 
-            self.driver = webdriver.Chrome('./chromedriver', chrome_options=chrome_options)
+            self.driver = webdriver.Chrome(webdriver_path, chrome_options=chrome_options)
         elif mode == 'requestium':
             from requestium import Session, Keys
-            self.session = Session(webdriver_path='./chromedriver',
+            self.session = Session(webdriver_path=webdriver_path,
                                    browser='chrome',
                                    default_timeout=timeout,
                                    webdriver_options={'arguments': ['headless']})

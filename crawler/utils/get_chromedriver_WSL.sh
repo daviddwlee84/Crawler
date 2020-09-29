@@ -17,7 +17,8 @@ executable='./chromedriver'
 # https://stackoverflow.com/questions/23929235/multi-line-string-with-extra-space-preserved-indentation
 cat > $executable <<- EOM
 #!/bin/sh
-./chromedriver.exe "\$@"
+DIR=\`dirname "\$0"\`
+\$DIR/chromedriver.exe "\$@"
 EOM
 
 chmod +x $executable
