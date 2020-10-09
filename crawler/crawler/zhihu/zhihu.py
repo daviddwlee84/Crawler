@@ -38,6 +38,9 @@ class User(object):
     def __str__(self):
         return f'{self.name} ({self.username})'
 
+    def __repr__(self):
+        return f'{self.name} ({self.username}) [follower: {self.followerCount}]'
+
     # ==== Base Function ==== #
 
     def _get_tab_base_url(self, tab: str) -> str:
@@ -79,9 +82,24 @@ class User(object):
             'div', {'class': 'ProfileHeader-main'})
 
         title = profile.select_one('.ProfileHeader-title')
-        name = title.select_one('.ProfileHeader-name')
 
+        # Name
+        name = title.select_one('.ProfileHeader-name')
         self.name = name.text
+
+        # Meta data
+        people = tree.find('main').find('div', {'itemprop': 'people'})
+        meta_results = {}
+        for tag in people.findChildren('meta', recursive=False):
+            meta_results[tag.get('itemprop')] = tag.get('content')
+
+        self.gender = meta_results['gender']
+        self.image = meta_results['image']
+        self.voteupCount = meta_results['zhihu:voteupCount']
+        self.thankedCount = meta_results['zhihu:thankedCount']
+        self.followerCount = meta_results['zhihu:followerCount']
+        self.answerCount = meta_results['zhihu:answerCount']
+        self.articlesCount = meta_results['zhihu:articlesCount']
 
     # ==== Helper ==== #
 
@@ -109,7 +127,7 @@ class User(object):
             pass
         elif method == 'get':
             i = 1
-            while True:
+            while i <= max_pages:
                 html = html_parser.get_html_directly(
                     base_url + f'?page={i}', use_driver=True)
 
@@ -125,20 +143,18 @@ class User(object):
                         # return
                         return results
 
-                page_result = self._get_list_items(html)
-                if not page_result or i >= max_pages:
+                page_result = self._get_tab_list_items(tab, html)
+                if not page_result:
                     break
                 print('Parsed', base_url + f'?page={i}')
                 results.extend(page_result)
                 i += 1
-                # time.sleep(DRIVER_PARSE_DELAY)
 
         return results
 
-    def _get_list_items(self, html: str) -> List[Dict[str, str]]:
+    def _get_tab_list_items(self, tab: str, html: str) -> List[Dict[str, str]]:
         """
         Get list of item, collect its meta data (title, cover image, "link")
-        TODO: next page
         """
         def fix_url(url: str):
             if url.startswith('//'):
@@ -151,30 +167,36 @@ class User(object):
         for result in tree.find_all('div', {'class', 'List-item'}):
             item = {}
 
-            article_meta_content = result.find('div', {'class', 'ContentItem'})
+            if tab in ['posts', 'answers']:
 
-            if article_meta_content is None:
-                # When parsing too frequently, might got some error...
-                # We need to leave some time for WebDriver to load the web content
-                print('Unable to parse meta content...')
-                assert False, 'Unable to parse meta content...'
+                article_meta_content = result.find(
+                    'div', {'class', 'ContentItem'})
 
-            # https://stackoverflow.com/questions/6287529/how-to-find-children-of-nodes-using-beautifulsoup
-            for tag in article_meta_content.findChildren('meta', recursive=False):
-                item[tag.get('itemprop')] = tag.get('content')
+                if article_meta_content is None:
+                    # When parsing too frequently, might got some error...
+                    # We need to leave some time for WebDriver to load the web content
+                    assert False, 'Unable to parse meta content...'
 
-            # Somehow the "url" of "Post" will be "//url" so we have to fix it
-            if 'url' in item:
-                item['url'] = fix_url(item['url'])
+                # https://stackoverflow.com/questions/6287529/how-to-find-children-of-nodes-using-beautifulsoup
+                for tag in article_meta_content.findChildren('meta', recursive=False):
+                    item[tag.get('itemprop')] = tag.get('content')
 
-            author_meta_content = article_meta_content.find(
-                'div', {'class', 'ContentItem-meta'})
-            for tag in author_meta_content.find_all('meta'):
-                item['author_' + tag.get('itemprop')] = tag.get('content')
+                # Somehow the "url" of "Post" will be "//url" so we have to fix it
+                if 'url' in item:
+                    item['url'] = fix_url(item['url'])
 
-            rich_content = result.find('div', {'class', 'RichContent'})
-            item['brief'] = rich_content.find(
-                'div', 'RichContent-inner').find('span', {'class', 'RichText'}).text
+                author_meta_content = article_meta_content.find(
+                    'div', {'class', 'ContentItem-meta'})
+                for tag in author_meta_content.find_all('meta'):
+                    item['author_' + tag.get('itemprop')] = tag.get('content')
+
+                rich_content = result.find('div', {'class', 'RichContent'})
+                item['brief'] = rich_content.find(
+                    'div', 'RichContent-inner').find('span', {'class', 'RichText'}).text
+
+            elif tab == 'following':
+                item['url'] = fix_url(result.find(
+                    'a', {'class': 'UserLink-link'}).get('href'))
 
             items.append(item)
 
@@ -187,7 +209,7 @@ class User(object):
         TODO: switch to multi_page
         """
         html = self._get_single_page('answers')
-        items = self._get_list_items(html)
+        items = self._get_tab_list_items('answers', html)
         return items
 
     def get_zvideos(self):
@@ -228,9 +250,43 @@ class User(object):
         """
         pass
 
-    def get_following(self):
+    def get_following(self, max_pages: int = float('inf')):
         """
         TODO: Directly return User objects
+        """
+        items = self._get_multi_page_list_items(
+            'following', max_pages=max_pages)
+        return (
+            User(url=item['url']) for item in items
+        )
+
+    def get_followers(self):
+        """
+        TODO
+        """
+        pass
+
+    def get_following_columns(self):
+        """
+        TODO
+        """
+        pass
+
+    def get_following_topics(self):
+        """
+        TODO
+        """
+        pass
+
+    def get_following_questions(self):
+        """
+        TODO
+        """
+        pass
+
+    def get_following_collections(self):
+        """
+        TODO
         """
         pass
 
@@ -322,11 +378,13 @@ def __test_user():
 
     user = User(username='li_ge_notes')
     print(user)
-    # print(user.get_answers())
-    # time.sleep(REQUESTS_PARSE_DELAY)
-    all_posts = list(user.get_posts(max_pages=5))
-    print(all_posts)
-    print(len(all_posts))
+    # print(user.followerCount)
+    print(user.get_answers())
+    print(list(user.get_posts(max_pages=1)))
+    print(list(user.get_following(max_pages=1)))
+    # all_posts = list(user.get_posts(max_pages=5))
+    # print(all_posts)
+    # print(len(all_posts))
 
 
 def __test_post():
