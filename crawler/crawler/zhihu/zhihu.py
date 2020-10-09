@@ -3,19 +3,20 @@ from bs4 import BeautifulSoup
 from typing import List, Dict
 from functools import lru_cache
 import time
+import os
+import sys
+
+curr_dir = os.path.dirname(os.path.abspath(__file__))
+
+sys.path.append(os.path.join(curr_dir, '../../..'))
 
 
-@lru_cache()
-def _get_html(url: str) -> str:
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+from crawler.utils.html_parser import HTMLParser
+html_parser = HTMLParser()
+# TODO: consider deprecate BeautifulSoup?! if use other HTML getting tool
 
-    raw_html = requests.get(url, headers=headers)
-
-    if raw_html.status_code == 200:
-        return raw_html.text
-
-    return None
+# DRIVER_PARSE_DELAY = 1  # sec
+REQUESTS_PARSE_DELAY = 1  # sec
 
 
 class User(object):
@@ -58,7 +59,7 @@ class User(object):
 
         url = self._get_tab_base_url(tab)
 
-        html = _get_html(url)
+        html = html_parser.get_html_directly(url)
         if not html:
             return None
 
@@ -109,13 +110,28 @@ class User(object):
         elif method == 'get':
             i = 1
             while True:
-                html = _get_html(base_url + f'?page={i}')
+                html = html_parser.get_html_directly(
+                    base_url + f'?page={i}', use_driver=True)
+
+                # Retry (TODO: maybe move this into html_parser itself)
+                retry = 0
+                while html is None:
+                    retry += 1
+                    print('Parse fail, sleep and reparse...')
+                    time.sleep(5)
+                    html = html_parser.get_html_directly(
+                        base_url + f'?page={i}', use_driver=True)
+                    if retry > 5:
+                        # return
+                        return results
+
                 page_result = self._get_list_items(html)
                 if not page_result or i >= max_pages:
                     break
                 print('Parsed', base_url + f'?page={i}')
                 results.extend(page_result)
                 i += 1
+                # time.sleep(DRIVER_PARSE_DELAY)
 
         return results
 
@@ -136,6 +152,13 @@ class User(object):
             item = {}
 
             article_meta_content = result.find('div', {'class', 'ContentItem'})
+
+            if article_meta_content is None:
+                # When parsing too frequently, might got some error...
+                # We need to leave some time for WebDriver to load the web content
+                print('Unable to parse meta content...')
+                assert False, 'Unable to parse meta content...'
+
             # https://stackoverflow.com/questions/6287529/how-to-find-children-of-nodes-using-beautifulsoup
             for tag in article_meta_content.findChildren('meta', recursive=False):
                 item[tag.get('itemprop')] = tag.get('content')
@@ -258,7 +281,8 @@ class Post(object):
         TODO: try lazy parse (only parse when it's used)
         """
         if not self.__page:
-            self.__page = _get_html(self.url)
+            self.__page = html_parser.get_html_directly(self.url)
+            time.sleep(REQUESTS_PARSE_DELAY)  # TODO
         self.parsed = True
 
         main = BeautifulSoup(self.__page, 'lxml').find('main')
@@ -298,8 +322,11 @@ def __test_user():
 
     user = User(username='li_ge_notes')
     print(user)
-    print(user.get_answers())
-    print(list(user.get_posts(max_pages=5)))
+    # print(user.get_answers())
+    # time.sleep(REQUESTS_PARSE_DELAY)
+    all_posts = list(user.get_posts(max_pages=5))
+    print(all_posts)
+    print(len(all_posts))
 
 
 def __test_post():
