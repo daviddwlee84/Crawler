@@ -1,5 +1,6 @@
 result/news/*.json
 result/news/*.tsv
+result/zhihu/*.json
 
 crawler/utils/chromedriver*
 
