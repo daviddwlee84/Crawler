@@ -7,10 +7,27 @@
 * `Answer`
 * `Post`
 
+## Notes
+
+Might have parsed failed problem.
+
+For example:
+
+```txt
+https://zhuanlan.zhihu.com/p/260060450
+
+该内容暂无法显示
+
+文章被建议修改：违反知乎社区管理规定
+作者修改内容通过后，文章会重新显示。
+```
+
 ## TODO
 
 * [ ] Deal with if getting html fail problem
-* [ ] Deal with single page too few "List-item" when using request parse html vs. using browser
+* [X] Deal with single page too few "List-item" when using request parse html vs. using browser
+* [ ] Parse Post with format (e.g. Markdown) or at least preserve paragraph (i.e. next lines)
+  * Or this might good for test the "corrector"
 
 ## Resources
 
