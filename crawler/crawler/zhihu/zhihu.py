@@ -1,7 +1,6 @@
-import requests
+import json
 from bs4 import BeautifulSoup
 from typing import List, Dict
-from functools import lru_cache
 import time
 import os
 import sys
@@ -32,7 +31,8 @@ class User(object):
             assert False, 'Require either username or url'
         self.page_cache = {}
 
-        self.get_profile()
+        self.__get_profile()
+        # self.__get_initial_data()
 
     # https://www.geeksforgeeks.org/str-vs-repr-in-python/
     def __str__(self):
@@ -71,7 +71,7 @@ class User(object):
 
     # ==== Infos ==== #
 
-    def get_profile(self):
+    def __get_profile(self):
         """
         TODO: there are some other more detail informations
         """
@@ -100,6 +100,33 @@ class User(object):
         self.followerCount = meta_results['zhihu:followerCount']
         self.answerCount = meta_results['zhihu:answerCount']
         self.articlesCount = meta_results['zhihu:articlesCount']
+
+        # TODO: we need to click button to get these information
+        # mapping = {
+        #     '居住地': 'location',
+        #     '所在行业': 'industry',
+        #     '教育经历': 'education',
+        #     '个人简介': 'bio'
+        # }
+        # profile_detail = tree.find('div', {
+        #                            'class': 'ProfileHeader-content'}).find('div', {'class': 'ProfileHeader-detail'})
+        # for item in profile_detail.find_all('ProfileHeader-detailItem'):
+        #     try:
+        #         label = item.find(
+        #             'span', {'class': 'ProfileHeader-detailLabel'}).text
+        #         value = item.find('div', {'ProfileHeader-detailValue'}).text
+        #         meta_results[mapping.get(label)] = value
+        #     except:
+        #         pass
+
+    def __get_initial_data(self):
+        """
+        TODO: Might have some useful information here (currently unused)
+        """
+        html = self._get_single_page('feed')
+        tree = BeautifulSoup(html, 'lxml')
+        self.initial_data = json.loads(tree.find(
+            'script', {'id': 'js-initialData'}).contents[0])
 
     # ==== Helper ==== #
 
@@ -191,8 +218,9 @@ class User(object):
                     item['author_' + tag.get('itemprop')] = tag.get('content')
 
                 rich_content = result.find('div', {'class', 'RichContent'})
-                item['brief'] = rich_content.find(
-                    'div', 'RichContent-inner').find('span', {'class', 'RichText'}).text
+                if rich_content:
+                    item['brief'] = rich_content.find(
+                        'div', 'RichContent-inner').find('span', {'class', 'RichText'}).text
 
             elif tab == 'following':
                 item['url'] = fix_url(result.find(
@@ -296,6 +324,9 @@ class Post(object):
     __page = None
     parsed = False
 
+    title = ''
+    content_raw_text = ''
+
     def __init__(self, id_num: str = None, url: str = None, init_parse: bool = False):
         if url:
             self.url = url
@@ -320,6 +351,14 @@ class Post(object):
 
     # ==== Parsing ==== #
 
+    def __get_initial_data(self):
+        """
+        TODO: Might have some useful information here (currently unused)
+        """
+        tree = BeautifulSoup(self.__page, 'lxml')
+        self.initial_data = json.loads(tree.find(
+            'script', {'id': 'js-initialData'}).contents[0])
+
     def _parse_header(self, header: BeautifulSoup):
         self.title = header.find('h1', {'calss', 'Post-Title'}).text
         author_info = header.find('div', {'class', 'AuthorInfo'})
@@ -341,14 +380,21 @@ class Post(object):
             time.sleep(REQUESTS_PARSE_DELAY)  # TODO
         self.parsed = True
 
-        main = BeautifulSoup(self.__page, 'lxml').find('main')
-        article = main.find('article')
+        try:
 
-        header = article.find('header')
-        self._parse_header(header)
+            # self.__get_initial_data()
 
-        content = article.find('div', {'class', 'RichText'})
-        self._parse_content(content)
+            main = BeautifulSoup(self.__page, 'lxml').find('main')
+            article = main.find('article')
+
+            header = article.find('header')
+            self._parse_header(header)
+
+            content = article.find('div', {'class', 'RichText'})
+            self._parse_content(content)
+
+        except:
+            print(f'Post {self.url} parsing failed.')
 
         return self
 
