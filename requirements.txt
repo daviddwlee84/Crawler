@@ -1,7 +1,7 @@
-lxml
-beautifulsoup4
-pandas
-tqdm
-datefinder
-selenium
-cachetools
+lxml==4.6.2
+beautifulsoup4==4.9.3
+pandas==1.1.5
+tqdm==4.57.0
+datefinder==0.7.1
+selenium==3.141.0
+cachetools==4.0.0
